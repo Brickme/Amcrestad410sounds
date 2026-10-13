@@ -19,12 +19,49 @@ Documentation and scripts for managing custom audio alerts, dynamic sound respon
 ### 1. Convert Audio to G.711A
 Run the following FFmpeg command in Windows PowerShell (via WSL) or terminal to encode your sound file:
 
-```bash
+```bash ## Default
 ffmpeg -i input.mp3 -acodec pcm_alaw -ar 8000 -ac 1 output.raw
 ```
-
+## I uesd
 ```
+ffmpeg -i input.mp3 -f s16le -acodec pcm_s16le -ar 16000 -ac 1 output.raw
+```
+
+## Default
+``` 
 curl -u admin:YOUR_PASSWORD "http://DOORBELL_IP/cgi-bin/audio.cgi?action=postAudio&httptype=singlepart" \
   --header "Content-Type: Audio/G.711A" \
   --data-binary "@output.raw"
+```
+## I used
+```
+#!/usr/bin/env bash
+
+DOORBELL_IP="192.168.xx.xxx"   # Your AD410 IP
+USER="admin"
+PASSWORD="yourpassword"
+
+# Take passed argument ($1) if provided, otherwise default to output.raw
+AUDIO_FILE="${1:-/config/www/uploads/output.raw}"
+
+# Check if the file actually exists before running
+if [ ! -f "$AUDIO_FILE" ]; then
+  echo "Error: Audio file '$AUDIO_FILE' not found."
+  exit 1
+fi
+
+FILE_SIZE=$(stat -c%s "$AUDIO_FILE" 2>/dev/null || stat -f%z "$AUDIO_FILE")
+DURATION=$(( FILE_SIZE / 16000 ))
+TIMEOUT=$(( DURATION + 2 ))
+
+echo "Uploading $AUDIO_FILE (${DURATION}s audio, timeout set to ${TIMEOUT}s)..."
+
+curl --digest -u "${USER}:${PASSWORD}" \
+     --max-time "${TIMEOUT}" \
+     -H "Content-Type: Audio/G.711A" \
+     --data-binary "@${AUDIO_FILE}" \
+     "http://${DOORBELL_IP}/cgi-bin/audio.cgi?action=postAudio&httptype=singlepart&sampleRate=8000&channel=1"
+
+echo ""
+echo "Audio play command finished."
 ```
