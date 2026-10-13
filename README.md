@@ -18,8 +18,9 @@ Documentation and scripts for managing custom audio alerts, dynamic sound respon
 
 ### 1. Convert Audio to G.711A
 Run the following FFmpeg command in Windows PowerShell (via WSL) or terminal to encode your sound file:
+## Default
 
-```bash ## Default
+```bash
 ffmpeg -i input.mp3 -acodec pcm_alaw -ar 8000 -ac 1 output.raw
 ```
 ## I uesd
